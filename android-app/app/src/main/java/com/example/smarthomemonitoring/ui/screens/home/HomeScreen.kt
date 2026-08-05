@@ -1,9 +1,11 @@
-package com.example.smarthomemonitoring.ui.screens.floor
+package com.example.smarthomemonitoring.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -11,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun FloorDashboardScreen() {
+fun HomeScreen(
+    onOpenGroundFloor: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -19,11 +23,20 @@ fun FloorDashboardScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Ground Floor")
+        Text(text = "My Smart Home")
 
         Text(
-            text = "Floor plan and smart devices will appear here.",
-            modifier = Modifier.padding(top = 12.dp)
+            text = "Select a floor to monitor",
+            modifier = Modifier.padding(top = 8.dp)
         )
+
+        Button(
+            onClick = onOpenGroundFloor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp)
+        ) {
+            Text(text = "Ground Floor")
+        }
     }
 }
