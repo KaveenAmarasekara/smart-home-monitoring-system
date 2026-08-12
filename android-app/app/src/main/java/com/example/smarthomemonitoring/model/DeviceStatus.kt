@@ -1,4 +1,8 @@
-package data.model
+package com.example.smarthomemonitoring.data.model
 
-class DeviceStatus {
+enum class DeviceStatus {
+    ON,
+    OFF,
+    ERROR,
+    DISCONNECTED
 }

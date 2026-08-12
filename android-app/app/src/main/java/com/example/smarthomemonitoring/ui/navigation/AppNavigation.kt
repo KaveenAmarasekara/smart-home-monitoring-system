@@ -16,6 +16,7 @@ fun AppNavigation() {
         navController = navController,
         startDestination = AppRoute.Login.route
     ) {
+
         composable(AppRoute.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
@@ -31,15 +32,24 @@ fun AppNavigation() {
         composable(AppRoute.Home.route) {
             HomeScreen(
                 onOpenGroundFloor = {
-                    navController.navigate(
-                        AppRoute.FloorDashboard.route
-                    )
+                    navController.navigate(AppRoute.GroundFloor.route)
+                },
+                onOpenFirstFloor = {
+                    navController.navigate(AppRoute.FirstFloor.route)
                 }
             )
         }
 
-        composable(AppRoute.FloorDashboard.route) {
-            FloorDashboardScreen()
+        composable(AppRoute.GroundFloor.route) {
+            FloorDashboardScreen(
+                floorName = "Ground Floor"
+            )
+        }
+
+        composable(AppRoute.FirstFloor.route) {
+            FloorDashboardScreen(
+                floorName = "First Floor"
+            )
         }
     }
 }

@@ -1,432 +1,183 @@
 package com.example.smarthomemonitoring.ui.screens.floor
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.smarthomemonitoring.data.model.Device
+import com.example.smarthomemonitoring.data.model.DeviceStatus
+import com.example.smarthomemonitoring.data.model.DeviceType
+import com.example.smarthomemonitoring.ui.components.DeviceCard
 
-private enum class DeviceStatus {
-    ON,
-    OFF,
-    ERROR,
-    DISCONNECTED
-}
-
-private enum class DeviceType(val label: String) {
-    OUTLET("Outlet"),
-    LIGHT("Light"),
-    IRON("Iron"),
-    CAMERA("Camera"),
-    MULTI_SWITCH("Switch Unit")
-}
-
-private data class SmartDevice(
-    val id: String,
-    val name: String,
-    val room: String,
-    val type: DeviceType,
-    val status: DeviceStatus,
-    val row: Int,
-    val column: Int,
-    val maxOnDuration: String? = null,
-    val switches: List<Boolean> = emptyList()
-)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FloorDashboardScreen() {
-    var devices by remember {
+fun FloorDashboardScreen(
+    floorName: String
+) {
+    var devices by remember(floorName) {
         mutableStateOf(
-            listOf(
-                SmartDevice(
-                    id = "living-light",
-                    name = "Living Room Light",
-                    room = "Living Room",
-                    type = DeviceType.LIGHT,
-                    status = DeviceStatus.ON,
-                    row = 0,
-                    column = 0
-                ),
-                SmartDevice(
-                    id = "kitchen-outlet",
-                    name = "Kitchen Outlet",
-                    room = "Kitchen",
-                    type = DeviceType.OUTLET,
-                    status = DeviceStatus.OFF,
-                    row = 0,
-                    column = 2
-                ),
-                SmartDevice(
-                    id = "utility-iron",
-                    name = "Iron Slot",
-                    room = "Utility",
-                    type = DeviceType.IRON,
-                    status = DeviceStatus.ON,
-                    row = 2,
-                    column = 1,
-                    maxOnDuration = "20 min"
-                ),
-                SmartDevice(
-                    id = "front-camera",
-                    name = "Front Door Camera",
-                    room = "Entrance",
-                    type = DeviceType.CAMERA,
-                    status = DeviceStatus.ON,
-                    row = 1,
-                    column = 3
-                ),
-                SmartDevice(
-                    id = "bed-switches",
-                    name = "Bedroom Switch Unit",
-                    room = "Bedroom",
-                    type = DeviceType.MULTI_SWITCH,
-                    status = DeviceStatus.ON,
-                    row = 3,
-                    column = 2,
-                    switches = listOf(true, false, true, false)
+            if (floorName == "Ground Floor") {
+                listOf(
+                    Device(
+                        id = "device1",
+                        name = "Living Room Light",
+                        type = DeviceType.LIGHT,
+                        status = DeviceStatus.ON,
+                        room = "Living Room",
+                        gridX = 1,
+                        gridY = 1
+                    ),
+                    Device(
+                        id = "device2",
+                        name = "TV Outlet",
+                        type = DeviceType.OUTLET,
+                        status = DeviceStatus.OFF,
+                        room = "Living Room",
+                        gridX = 2,
+                        gridY = 1
+                    ),
+                    Device(
+                        id = "device3",
+                        name = "Clothing Iron",
+                        type = DeviceType.IRON,
+                        status = DeviceStatus.OFF,
+                        room = "Bedroom",
+                        gridX = 3,
+                        gridY = 2
+                    ),
+                    Device(
+                        id = "device4",
+                        name = "Front Camera",
+                        type = DeviceType.CAMERA,
+                        status = DeviceStatus.ON,
+                        room = "Entrance",
+                        gridX = 1,
+                        gridY = 3
+                    ),
+                    Device(
+                        id = "device5",
+                        name = "Kitchen Switch Unit",
+                        type = DeviceType.MULTI_SWITCH,
+                        status = DeviceStatus.DISCONNECTED,
+                        room = "Kitchen",
+                        gridX = 3,
+                        gridY = 3
+                    )
                 )
-            )
+            } else {
+                listOf(
+                    Device(
+                        id = "device6",
+                        name = "Bedroom Light",
+                        type = DeviceType.LIGHT,
+                        status = DeviceStatus.OFF,
+                        room = "Master Bedroom",
+                        gridX = 1,
+                        gridY = 1
+                    ),
+                    Device(
+                        id = "device7",
+                        name = "Bedroom Outlet",
+                        type = DeviceType.OUTLET,
+                        status = DeviceStatus.ON,
+                        room = "Master Bedroom",
+                        gridX = 2,
+                        gridY = 1
+                    ),
+                    Device(
+                        id = "device8",
+                        name = "Hallway Camera",
+                        type = DeviceType.CAMERA,
+                        status = DeviceStatus.ON,
+                        room = "Hallway",
+                        gridX = 2,
+                        gridY = 2
+                    ),
+                    Device(
+                        id = "device9",
+                        name = "Study Light",
+                        type = DeviceType.LIGHT,
+                        status = DeviceStatus.ERROR,
+                        room = "Study Room",
+                        gridX = 3,
+                        gridY = 2
+                    )
+                )
+            }
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
-    ) {
-        DashboardHeader(devices = devices)
-        FloorGrid(devices = devices)
-
-        Text(
-            text = "Devices",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        devices.forEach { device ->
-            DeviceCard(
-                device = device,
-                onToggle = {
-                    devices = devices.map {
-                        if (it.id == device.id) {
-                            it.copy(
-                                status = if (it.status == DeviceStatus.ON) {
-                                    DeviceStatus.OFF
-                                } else {
-                                    DeviceStatus.ON
-                                }
-                            )
-                        } else {
-                            it
-                        }
-                    }
-                },
-                onSwitchToggle = { switchIndex ->
-                    devices = devices.map {
-                        if (it.id == device.id) {
-                            it.copy(
-                                switches = it.switches.mapIndexed { index, isOn ->
-                                    if (index == switchIndex) !isOn else isOn
-                                },
-                                status = DeviceStatus.ON
-                            )
-                        } else {
-                            it
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(text = floorName)
+                        Text(
+                            text = "${devices.size} devices",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             )
         }
-    }
-}
+    ) { paddingValues ->
 
-@Composable
-private fun DashboardHeader(devices: List<SmartDevice>) {
-    val activeCount = devices.count { it.status == DeviceStatus.ON }
-
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = "Ground Floor",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "$activeCount active devices • ${devices.size} monitored points",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun FloorGrid(devices: List<SmartDevice>) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 18.dp)
         ) {
-            repeat(4) { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    repeat(4) { column ->
-                        val device = devices.firstOrNull {
-                            it.row == row && it.column == column
-                        }
+            Text(
+                text = "Devices",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(
+                    top = 16.dp,
+                    bottom = 8.dp
+                )
+            )
 
-                        Surface(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f),
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surface
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                if (device == null) {
-                                    Text(
-                                        text = "Room",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            LazyColumn {
+                items(
+                    items = devices,
+                    key = { it.id }
+                ) { device ->
+
+                    DeviceCard(
+                        device = device,
+                        onToggle = { isOn ->
+                            devices = devices.map { currentDevice ->
+
+                                if (currentDevice.id == device.id) {
+                                    currentDevice.copy(
+                                        status = if (isOn) {
+                                            DeviceStatus.ON
+                                        } else {
+                                            DeviceStatus.OFF
+                                        }
                                     )
                                 } else {
-                                    DeviceMarker(device = device)
+                                    currentDevice
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DeviceMarker(device: SmartDevice) {
-    val markerColor = when (device.status) {
-        DeviceStatus.ON -> Color(0xFF2E7D32)
-        DeviceStatus.OFF -> MaterialTheme.colorScheme.outline
-        DeviceStatus.ERROR -> MaterialTheme.colorScheme.error
-        DeviceStatus.DISCONNECTED -> Color(0xFF616161)
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .background(markerColor, RoundedCornerShape(14.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = device.type.label.first().toString(),
-                color = Color.White,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        Text(
-            text = device.room,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun DeviceCard(
-    device: SmartDevice,
-    onToggle: () -> Unit,
-    onSwitchToggle: (Int) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = device.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "${device.type.label} • ${device.room}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                StatusChip(status = device.status)
-            }
-
-            if (device.type == DeviceType.CAMERA) {
-                CameraPreview()
-            }
-
-            if (device.maxOnDuration != null) {
-                SafetyRule(maxOnDuration = device.maxOnDuration)
-            }
-
-            if (device.switches.isNotEmpty()) {
-                MultiSwitchControls(
-                    switches = device.switches,
-                    onSwitchToggle = onSwitchToggle
-                )
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Power",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Switch(
-                        checked = device.status == DeviceStatus.ON,
-                        onCheckedChange = { onToggle() },
-                        enabled = device.status != DeviceStatus.DISCONNECTED
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun StatusChip(status: DeviceStatus) {
-    val color = when (status) {
-        DeviceStatus.ON -> Color(0xFF2E7D32)
-        DeviceStatus.OFF -> MaterialTheme.colorScheme.outline
-        DeviceStatus.ERROR -> MaterialTheme.colorScheme.error
-        DeviceStatus.DISCONNECTED -> Color(0xFF616161)
-    }
-
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = color.copy(alpha = 0.12f),
-        contentColor = color
-    ) {
-        Text(
-            text = status.name,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun SafetyRule(maxOnDuration: String) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.errorContainer
-    ) {
-        Text(
-            text = "Safety cutoff after $maxOnDuration",
-            modifier = Modifier.padding(12.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onErrorContainer
-        )
-    }
-}
-
-@Composable
-private fun CameraPreview() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(96.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = Color(0xFF263238)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = "Mock camera stream",
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-private fun MultiSwitchControls(
-    switches: List<Boolean>,
-    onSwitchToggle: (Int) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        HorizontalDivider()
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            switches.forEachIndexed { index, isOn ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "S${index + 1}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Switch(
-                        checked = isOn,
-                        onCheckedChange = { onSwitchToggle(index) }
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(2.dp))
     }
 }

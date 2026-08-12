@@ -1,4 +1,9 @@
-package com.example.smarthomemonitoring.model
+package com.example.smarthomemonitoring.data.model
 
-class DeviceType {
+enum class DeviceType {
+    OUTLET,
+    LIGHT,
+    IRON,
+    CAMERA,
+    MULTI_SWITCH
 }

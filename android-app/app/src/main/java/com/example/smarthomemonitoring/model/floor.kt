@@ -1,4 +1,7 @@
-package com.example.smarthomemonitoring.model
+package com.example.smarthomemonitoring.data.model
 
-class floor {
-}
+data class Floor(
+    val id: String,
+    val name: String,
+    val floorNumber: Int
+)

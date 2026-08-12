@@ -1,4 +1,11 @@
-package com.example.smarthomemonitoring.model
+package com.example.smarthomemonitoring.data.model
 
-class device {
-}
+data class Device(
+    val id: String,
+    val name: String,
+    val type: DeviceType,
+    val status: DeviceStatus,
+    val room: String,
+    val gridX: Int,
+    val gridY: Int
+)
