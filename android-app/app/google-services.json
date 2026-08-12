@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "86072852464",
+    "project_id": "smarthomemonitoring-ef36a",
+    "storage_bucket": "smarthomemonitoring-ef36a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86072852464:android:f821ae0f8a8ef004936735",
+        "android_client_info": {
+          "package_name": "com.example.smarthomemonitoring"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgQpJuhCXJkGYR80oxZ1u_Z3szkginDkQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

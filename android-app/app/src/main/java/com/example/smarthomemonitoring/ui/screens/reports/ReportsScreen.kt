@@ -20,10 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.example.smarthomemonitoring.data.model.UsageReport
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsScreen(
+    report: UsageReport,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -66,7 +68,7 @@ fun ReportsScreen(
                     )
 
                     Text(
-                        text = "24 h 35 min",
+                        text = report.totalUsageLabel,
                         style =
                             MaterialTheme.typography.headlineLarge
                     )
@@ -92,29 +94,19 @@ fun ReportsScreen(
                 modifier = Modifier.height(16.dp)
             )
 
-            UsageBar(
-                title = "Living Room Light",
-                value = "8h",
-                percentage = 0.8f
-            )
-
-            UsageBar(
-                title = "Bedroom Outlet",
-                value = "6h",
-                percentage = 0.6f
-            )
-
-            UsageBar(
-                title = "Front Camera",
-                value = "5h",
-                percentage = 0.5f
-            )
-
-            UsageBar(
-                title = "Kitchen Switch",
-                value = "3h",
-                percentage = 0.3f
-            )
+            if (report.mostUsedDevices.isEmpty()) {
+                Text(
+                    text = "No usage records yet."
+                )
+            } else {
+                report.mostUsedDevices.forEach { item ->
+                    UsageBar(
+                        title = item.title,
+                        value = item.value,
+                        percentage = item.percentage
+                    )
+                }
+            }
 
             Spacer(
                 modifier = Modifier.height(24.dp)
@@ -138,19 +130,10 @@ fun ReportsScreen(
 
                     Text(
                         text =
-                            "2 automatic shutdowns this month"
+                            "${report.safetyShutdownsThisMonth} automatic shutdowns this month"
                     )
                 }
             }
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            Text(
-                text =
-                    "Mock data only. Real reports will come from Firestore usage records."
-            )
         }
     }
 }

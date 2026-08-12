@@ -15,31 +15,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.smarthomemonitoring.data.model.UserSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    settings: UserSettings,
+    onSettingsChanged: (UserSettings) -> Unit,
     onBack: () -> Unit
 ) {
-    var safetyAlerts by remember {
-        mutableStateOf(true)
-    }
-
-    var deviceAlerts by remember {
-        mutableStateOf(true)
-    }
-
-    var scheduleAlerts by remember {
-        mutableStateOf(false)
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,9 +65,13 @@ fun SettingsScreen(
                 title = "Safety Alerts",
                 description =
                     "Automatic shutdown notifications",
-                checked = safetyAlerts,
+                checked = settings.safetyAlerts,
                 onCheckedChange = {
-                    safetyAlerts = it
+                    onSettingsChanged(
+                        settings.copy(
+                            safetyAlerts = it
+                        )
+                    )
                 }
             )
 
@@ -88,9 +79,13 @@ fun SettingsScreen(
                 title = "Device Alerts",
                 description =
                     "Errors and disconnected devices",
-                checked = deviceAlerts,
+                checked = settings.deviceAlerts,
                 onCheckedChange = {
-                    deviceAlerts = it
+                    onSettingsChanged(
+                        settings.copy(
+                            deviceAlerts = it
+                        )
+                    )
                 }
             )
 
@@ -98,9 +93,13 @@ fun SettingsScreen(
                 title = "Schedule Alerts",
                 description =
                     "Scheduled light activity",
-                checked = scheduleAlerts,
+                checked = settings.scheduleAlerts,
                 onCheckedChange = {
-                    scheduleAlerts = it
+                    onSettingsChanged(
+                        settings.copy(
+                            scheduleAlerts = it
+                        )
+                    )
                 }
             )
 

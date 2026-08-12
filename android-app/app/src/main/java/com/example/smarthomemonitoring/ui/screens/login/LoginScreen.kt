@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -25,7 +26,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit
+    onLogin: (
+        email: String,
+        password: String,
+        onResult: (Result<Unit>) -> Unit
+    ) -> Unit
 ) {
     var email by remember {
         mutableStateOf("")
@@ -33,6 +38,14 @@ fun LoginScreen(
 
     var password by remember {
         mutableStateOf("")
+    }
+
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
+
+    var errorMessage by remember {
+        mutableStateOf<String?>(null)
     }
 
     Surface(
@@ -46,11 +59,6 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
-            Text(
-                text = "🏠",
-                style = MaterialTheme.typography.displayLarge
-            )
 
             Text(
                 text = "Smart Home",
@@ -103,14 +111,35 @@ fun LoginScreen(
             )
 
             Button(
-                onClick = onLoginSuccess,
+                onClick = {
+                    isLoading = true
+                    errorMessage = null
+
+                    onLogin(
+                        email,
+                        password
+                    ) { result ->
+                        isLoading = false
+
+                        result.exceptionOrNull()?.let {
+                            errorMessage =
+                                it.message
+                                    ?: "Unable to log in. Please try again."
+                        }
+                    }
+                },
                 enabled =
                     email.isNotBlank() &&
-                            password.isNotBlank(),
+                        password.isNotBlank() &&
+                        !isLoading,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Login")
+                if (isLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Login")
+                }
             }
 
             Spacer(
@@ -118,9 +147,16 @@ fun LoginScreen(
             )
 
             Text(
-                text = "Demo login – Firebase Authentication will be connected later.",
+                text =
+                    errorMessage
+                        ?: "New emails are registered automatically for testing.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color =
+                    if (errorMessage == null) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    }
             )
         }
     }
