@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,9 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.smarthomemonitoring.data.model.Device
 import com.example.smarthomemonitoring.data.model.DeviceStatus
+import com.example.smarthomemonitoring.data.model.DeviceType
 
 @Composable
 fun FloorPlanGrid(
@@ -32,23 +33,26 @@ fun FloorPlanGrid(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp)
+            .height(300.dp)
+            .clip(RoundedCornerShape(22.dp))
             .background(
-                color = MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.surfaceVariant
             )
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(22.dp)
             )
     ) {
         val cellWidth = maxWidth / columns
         val cellHeight = maxHeight / rows
 
-        // Grid lines
         for (column in 1 until columns) {
             Box(
                 modifier = Modifier
-                    .offset(x = cellWidth * column)
+                    .offset(
+                        x = cellWidth * column
+                    )
                     .size(
                         width = 1.dp,
                         height = maxHeight
@@ -62,7 +66,9 @@ fun FloorPlanGrid(
         for (row in 1 until rows) {
             Box(
                 modifier = Modifier
-                    .offset(y = cellHeight * row)
+                    .offset(
+                        y = cellHeight * row
+                    )
                     .size(
                         width = maxWidth,
                         height = 1.dp
@@ -77,20 +83,31 @@ fun FloorPlanGrid(
 
             val markerColor = when (device.status) {
                 DeviceStatus.ON -> Color(0xFF2E7D32)
-                DeviceStatus.OFF -> Color(0xFF757575)
+                DeviceStatus.OFF -> Color(0xFF616161)
                 DeviceStatus.ERROR -> Color(0xFFD32F2F)
                 DeviceStatus.DISCONNECTED -> Color(0xFFFF8F00)
+            }
+
+            val markerText = when (device.type) {
+                DeviceType.LIGHT -> "L"
+                DeviceType.OUTLET -> "O"
+                DeviceType.IRON -> "I"
+                DeviceType.CAMERA -> "C"
+                DeviceType.MULTI_SWITCH -> "S"
             }
 
             Box(
                 modifier = Modifier
                     .offset(
-                        x = cellWidth * device.gridX +
-                                (cellWidth / 2) -
-                                20.dp,
-                        y = cellHeight * device.gridY +
-                                (cellHeight / 2) -
-                                20.dp
+                        x =
+                            cellWidth * device.gridX +
+                                    cellWidth / 2 -
+                                    20.dp,
+
+                        y =
+                            cellHeight * device.gridY +
+                                    cellHeight / 2 -
+                                    20.dp
                     )
                     .size(40.dp)
                     .clip(CircleShape)
@@ -101,9 +118,8 @@ fun FloorPlanGrid(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = device.name.take(1),
-                    color = Color.White,
-                    fontSize = 14.sp
+                    text = markerText,
+                    color = Color.White
                 )
             }
         }
