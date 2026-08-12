@@ -1,6 +1,5 @@
 package com.example.smarthomemonitoring.ui.screens.home
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,10 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Stairs
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,7 +35,8 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Smart Home")
+                        Text(text = "Smart Home")
+
                         Text(
                             text = "Monitoring Dashboard",
                             style = MaterialTheme.typography.bodySmall
@@ -64,19 +64,23 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(
+                modifier = Modifier.height(28.dp)
+            )
 
             FloorCard(
                 title = "Ground Floor",
-                subtitle = "Living room, kitchen, entrance",
+                subtitle = "Living room, kitchen and entrance",
                 onClick = onOpenGroundFloor
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
             FloorCard(
                 title = "First Floor",
-                subtitle = "Bedrooms, study room, hallway",
+                subtitle = "Bedrooms, study room and hallway",
                 onClick = onOpenFirstFloor
             )
         }
@@ -94,7 +98,8 @@ private fun FloorCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor =
+                MaterialTheme.colorScheme.primaryContainer
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 5.dp
@@ -122,7 +127,8 @@ private fun FloorCard(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color =
+                        MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }

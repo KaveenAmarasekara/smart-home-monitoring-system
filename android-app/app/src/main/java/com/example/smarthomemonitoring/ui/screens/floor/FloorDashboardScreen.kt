@@ -2,9 +2,12 @@ package com.example.smarthomemonitoring.ui.screens.floor
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -21,6 +24,7 @@ import com.example.smarthomemonitoring.data.model.Device
 import com.example.smarthomemonitoring.data.model.DeviceStatus
 import com.example.smarthomemonitoring.data.model.DeviceType
 import com.example.smarthomemonitoring.ui.components.DeviceCard
+import com.example.smarthomemonitoring.ui.components.FloorPlanGrid
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +41,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.LIGHT,
                         status = DeviceStatus.ON,
                         room = "Living Room",
-                        gridX = 1,
-                        gridY = 1
+                        gridX = 0,
+                        gridY = 0
                     ),
                     Device(
                         id = "device2",
@@ -46,8 +50,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.OUTLET,
                         status = DeviceStatus.OFF,
                         room = "Living Room",
-                        gridX = 2,
-                        gridY = 1
+                        gridX = 1,
+                        gridY = 0
                     ),
                     Device(
                         id = "device3",
@@ -55,8 +59,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.IRON,
                         status = DeviceStatus.OFF,
                         room = "Bedroom",
-                        gridX = 3,
-                        gridY = 2
+                        gridX = 2,
+                        gridY = 1
                     ),
                     Device(
                         id = "device4",
@@ -64,8 +68,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.CAMERA,
                         status = DeviceStatus.ON,
                         room = "Entrance",
-                        gridX = 1,
-                        gridY = 3
+                        gridX = 0,
+                        gridY = 2
                     ),
                     Device(
                         id = "device5",
@@ -74,7 +78,7 @@ fun FloorDashboardScreen(
                         status = DeviceStatus.DISCONNECTED,
                         room = "Kitchen",
                         gridX = 3,
-                        gridY = 3
+                        gridY = 2
                     )
                 )
             } else {
@@ -85,8 +89,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.LIGHT,
                         status = DeviceStatus.OFF,
                         room = "Master Bedroom",
-                        gridX = 1,
-                        gridY = 1
+                        gridX = 0,
+                        gridY = 0
                     ),
                     Device(
                         id = "device7",
@@ -94,8 +98,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.OUTLET,
                         status = DeviceStatus.ON,
                         room = "Master Bedroom",
-                        gridX = 2,
-                        gridY = 1
+                        gridX = 1,
+                        gridY = 0
                     ),
                     Device(
                         id = "device8",
@@ -103,8 +107,8 @@ fun FloorDashboardScreen(
                         type = DeviceType.CAMERA,
                         status = DeviceStatus.ON,
                         room = "Hallway",
-                        gridX = 2,
-                        gridY = 2
+                        gridX = 1,
+                        gridY = 1
                     ),
                     Device(
                         id = "device9",
@@ -112,12 +116,16 @@ fun FloorDashboardScreen(
                         type = DeviceType.LIGHT,
                         status = DeviceStatus.ERROR,
                         room = "Study Room",
-                        gridX = 3,
-                        gridY = 2
+                        gridX = 2,
+                        gridY = 1
                     )
                 )
             }
         )
+    }
+
+    var selectedDevice by remember {
+        mutableStateOf<Device?>(null)
     }
 
     Scaffold(
@@ -126,6 +134,7 @@ fun FloorDashboardScreen(
                 title = {
                     Column {
                         Text(text = floorName)
+
                         Text(
                             text = "${devices.size} devices",
                             style = MaterialTheme.typography.bodySmall
@@ -136,47 +145,118 @@ fun FloorDashboardScreen(
         }
     ) { paddingValues ->
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 18.dp)
         ) {
-            Text(
-                text = "Devices",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(
-                    top = 16.dp,
-                    bottom = 8.dp
+
+            item {
+                Text(
+                    text = "Floor Plan",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(
+                        top = 16.dp,
+                        bottom = 12.dp
+                    )
                 )
-            )
+            }
 
-            LazyColumn {
-                items(
-                    items = devices,
-                    key = { it.id }
-                ) { device ->
+            item {
+                FloorPlanGrid(
+                    devices = devices,
+                    columns = 4,
+                    rows = 4,
+                    onDeviceClick = { device ->
+                        selectedDevice = device
+                    }
+                )
+            }
 
-                    DeviceCard(
-                        device = device,
-                        onToggle = { isOn ->
-                            devices = devices.map { currentDevice ->
+            selectedDevice?.let { device ->
 
-                                if (currentDevice.id == device.id) {
-                                    currentDevice.copy(
-                                        status = if (isOn) {
-                                            DeviceStatus.ON
-                                        } else {
-                                            DeviceStatus.OFF
-                                        }
-                                    )
-                                } else {
-                                    currentDevice
-                                }
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 14.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor =
+                                MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = device.name,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Text(
+                                text = device.room,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            Text(
+                                text = "Type: ${device.type}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+
+                            Text(
+                                text = "Status: ${device.status}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text(
+                    text = "Devices",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(
+                        top = 24.dp,
+                        bottom = 8.dp
+                    )
+                )
+            }
+
+            items(
+                items = devices,
+                key = { it.id }
+            ) { device ->
+
+                DeviceCard(
+                    device = device,
+                    onToggle = { isOn ->
+
+                        devices = devices.map { currentDevice ->
+
+                            if (currentDevice.id == device.id) {
+
+                                currentDevice.copy(
+                                    status = if (isOn) {
+                                        DeviceStatus.ON
+                                    } else {
+                                        DeviceStatus.OFF
+                                    }
+                                )
+
+                            } else {
+                                currentDevice
                             }
                         }
-                    )
-                }
+
+                        if (selectedDevice?.id == device.id) {
+                            selectedDevice = devices.firstOrNull {
+                                it.id == device.id
+                            }
+                        }
+                    }
+                )
             }
         }
     }
