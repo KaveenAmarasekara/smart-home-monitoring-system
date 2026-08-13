@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Home Firebase Showcase</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Firebase Live Demo</p>
+          <h1>Smart Home Monitor</h1>
+        </div>
+        <div class="session">
+          <span id="connectionStatus" class="status-dot"></span>
+          <span id="sessionLabel">Signed out</span>
+          <button id="signOutButton" class="ghost hidden">Sign out</button>
+        </div>
+      </section>
+
+      <section id="authPanel" class="panel auth-panel">
+        <div>
+          <h2>Demo login</h2>
+          <p>Use the same email and password you use in the Android app.</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <input id="emailInput" type="email" placeholder="Email" value="test@example.com" required />
+          <input id="passwordInput" type="password" placeholder="Password" value="123456" required />
+          <button type="submit">Connect to Firebase</button>
+        </form>
+      </section>
+
+      <section id="dashboard" class="dashboard hidden">
+        <section class="metrics">
+          <article class="metric">
+            <span>Total devices</span>
+            <strong id="totalDevices">0</strong>
+          </article>
+          <article class="metric">
+            <span>Online now</span>
+            <strong id="onlineDevices">0</strong>
+          </article>
+          <article class="metric">
+            <span>Weekly usage</span>
+            <strong id="weeklyUsage">0m</strong>
+          </article>
+          <article class="metric">
+            <span>Safety shutdowns</span>
+            <strong id="shutdownCount">0</strong>
+          </article>
+        </section>
+
+        <section class="grid">
+          <article class="panel devices-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Firestore collection</p>
+                <h2>Devices</h2>
+              </div>
+              <button id="seedButton" class="ghost">Seed demo data</button>
+            </div>
+            <div id="deviceList" class="list"></div>
+          </article>
+
+          <aside class="side-stack">
+            <article class="panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">User document</p>
+                  <h2>Settings</h2>
+                </div>
+              </div>
+              <div id="settingsList" class="settings-list"></div>
+            </article>
+
+            <article class="panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Firestore collection</p>
+                  <h2>Notifications</h2>
+                </div>
+              </div>
+              <div id="notificationList" class="list compact"></div>
+            </article>
+          </aside>
+        </section>
+      </section>
+
+      <p id="message" class="message"></p>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
