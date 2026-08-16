@@ -344,9 +344,12 @@ private fun IronControls(
                 valueRange = 5f..60f
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text =
-                    "The real automatic shutdown will be handled by the backend Cloud Function."
+                    "Auto-shutdown: the backend safety worker monitors this device and forces it OFF if the active duration exceeds the limit above. A notification is pushed when this triggers.",
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

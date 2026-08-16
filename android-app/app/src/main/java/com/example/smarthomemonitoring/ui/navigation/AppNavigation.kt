@@ -272,7 +272,17 @@ fun AppNavigation() {
                         navController.navigate(
                             AppRoute.Settings.route
                         )
-                    }
+                    },
+
+                    groundFloorTotal = groundDevices.size,
+                    groundFloorOnline = groundDevices.count {
+                        it.status == com.example.smarthomemonitoring.data.model.DeviceStatus.ON
+                    },
+                    firstFloorTotal = firstFloorDevices.size,
+                    firstFloorOnline = firstFloorDevices.count {
+                        it.status == com.example.smarthomemonitoring.data.model.DeviceStatus.ON
+                    },
+                    unreadAlerts = notifications.count { it.important }
                 )
             }
         }

@@ -28,7 +28,12 @@ fun HomeScreen(
     onOpenFirstFloor: () -> Unit,
     onOpenReports: () -> Unit,
     onOpenNotifications: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    groundFloorTotal: Int = 0,
+    groundFloorOnline: Int = 0,
+    firstFloorTotal: Int = 0,
+    firstFloorOnline: Int = 0,
+    unreadAlerts: Int = 0
 ) {
     Scaffold(
         topBar = {
@@ -76,6 +81,8 @@ fun HomeScreen(
                 title = "🏠 Ground Floor",
                 subtitle =
                     "Living room, kitchen, entrance and garage",
+                statusLine =
+                    if (groundFloorTotal > 0) "$groundFloorOnline / $groundFloorTotal devices active" else null,
                 containerColor =
                     MaterialTheme.colorScheme.primaryContainer,
                 onClick = onOpenGroundFloor
@@ -89,6 +96,8 @@ fun HomeScreen(
                 title = "🛏 First Floor",
                 subtitle =
                     "Bedrooms, hallway and study room",
+                statusLine =
+                    if (firstFloorTotal > 0) "$firstFloorOnline / $firstFloorTotal devices active" else null,
                 containerColor =
                     MaterialTheme.colorScheme.secondaryContainer,
                 onClick = onOpenFirstFloor
@@ -144,7 +153,8 @@ private fun DashboardCard(
     title: String,
     subtitle: String,
     containerColor: androidx.compose.ui.graphics.Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    statusLine: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -174,6 +184,15 @@ private fun DashboardCard(
                 modifier =
                     Modifier.padding(top = 5.dp)
             )
+
+            if (statusLine != null) {
+                Text(
+                    text = statusLine,
+                    modifier = Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
