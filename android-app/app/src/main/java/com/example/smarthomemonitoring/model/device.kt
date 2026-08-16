@@ -19,5 +19,8 @@ data class Device(
     val maxOnDurationMinutes: Int = 15,
 
     // Multi-switch
-    val switches: Map<String, Boolean> = emptyMap()
+    val switches: Map<String, Boolean> = emptyMap(),
+
+    // Epoch millis when device was last turned ON; 0 means not active
+    val turnedOnAt: Long = 0L
 )

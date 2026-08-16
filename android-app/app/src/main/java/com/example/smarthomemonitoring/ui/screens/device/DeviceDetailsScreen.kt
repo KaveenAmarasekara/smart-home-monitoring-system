@@ -14,9 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -26,6 +34,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -40,20 +52,41 @@ import kotlin.math.roundToInt
 fun DeviceDetailsScreen(
     device: Device,
     onUpdateDevice: (Device) -> Unit,
+    onDeleteDevice: () -> Unit,
     onBack: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete device?") },
+            text = { Text("\"${device.name}\" will be permanently removed.") },
+            confirmButton = {
+                TextButton(onClick = { showDeleteConfirm = false; onDeleteDevice() }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    TextButton(
-                        onClick = onBack
-                    ) {
-                        Text("Back")
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                title = {
-                    Text(device.name)
+                title = { Text(device.name) },
+                actions = {
+                    IconButton(onClick = { showDeleteConfirm = true }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete device",
+                            tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             )
         }
@@ -191,24 +224,22 @@ private fun LightControls(
     device: Device,
     onUpdateDevice: (Device) -> Unit
 ) {
+    var brightnessSlider by remember(device.id) { mutableStateOf(device.brightness.toFloat()) }
+
     Text(
         text = "Brightness",
         style = MaterialTheme.typography.titleLarge
     )
 
     Text(
-        text = "${device.brightness}%"
+        text = "${brightnessSlider.roundToInt()}%"
     )
 
     Slider(
-        value = device.brightness.toFloat(),
-        onValueChange = {
-            onUpdateDevice(
-                device.copy(
-                    brightness =
-                        it.roundToInt()
-                )
-            )
+        value = brightnessSlider,
+        onValueChange = { brightnessSlider = it },
+        onValueChangeFinished = {
+            onUpdateDevice(device.copy(brightness = brightnessSlider.roundToInt()))
         },
         valueRange = 0f..100f
     )
@@ -302,6 +333,37 @@ private fun IronControls(
     device: Device,
     onUpdateDevice: (Device) -> Unit
 ) {
+    var durationSlider by remember(device.id) { mutableStateOf(device.maxOnDurationMinutes.toFloat()) }
+
+    val elapsedMinutes = if (device.status == DeviceStatus.ON && device.turnedOnAt > 0L) {
+        ((System.currentTimeMillis() - device.turnedOnAt) / 60_000L).toInt()
+    } else null
+
+    if (elapsedMinutes != null) {
+        val remaining = device.maxOnDurationMinutes - elapsedMinutes
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (remaining <= 2)
+                    MaterialTheme.colorScheme.errorContainer
+                else
+                    MaterialTheme.colorScheme.tertiaryContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = if (remaining > 0) "Auto-shutdown in $remaining min" else "Shutting down…",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "ON for $elapsedMinutes min · max ${device.maxOnDurationMinutes} min",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor =
@@ -324,23 +386,17 @@ private fun IronControls(
 
             Text(
                 text =
-                    "Maximum ON duration: ${device.maxOnDurationMinutes} minutes"
+                    "Maximum ON duration: ${durationSlider.roundToInt()} minutes"
             )
 
             Slider(
-                value =
-                    device.maxOnDurationMinutes
-                        .toFloat(),
-
-                onValueChange = {
+                value = durationSlider,
+                onValueChange = { durationSlider = it },
+                onValueChangeFinished = {
                     onUpdateDevice(
-                        device.copy(
-                            maxOnDurationMinutes =
-                                it.roundToInt()
-                        )
+                        device.copy(maxOnDurationMinutes = durationSlider.roundToInt())
                     )
                 },
-
                 valueRange = 5f..60f
             )
 

@@ -14,6 +14,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.FieldValue
 
 object FirebaseSmartHomeRepository {
 
@@ -105,6 +106,40 @@ object FirebaseSmartHomeRepository {
             .addOnFailureListener {
                 onError(it)
             }
+    }
+
+    fun addDevice(
+        device: Device,
+        floorId: String,
+        onSuccess: (Device) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val newRef = devicesCollection.document()
+        val deviceWithId = device.copy(id = newRef.id)
+        newRef.set(deviceWithId.toFirestoreMap(floorId))
+            .addOnSuccessListener { onSuccess(deviceWithId) }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun deleteDevice(
+        deviceId: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        devicesCollection.document(deviceId)
+            .delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun addNotification(
+        notification: AppNotification,
+        onError: (Exception) -> Unit
+    ) {
+        notificationsCollection
+            .document(notification.id)
+            .set(notification.toFirestoreMap())
+            .addOnFailureListener { onError(it) }
     }
 
     fun observeNotifications(
@@ -411,6 +446,12 @@ object FirebaseSmartHomeRepository {
             "switches" to switches
         )
 
+        if (turnedOnAt > 0L) {
+            data["turnedOnAt"] = turnedOnAt
+        } else {
+            data["turnedOnAt"] = FieldValue.delete()
+        }
+
         usageMinutesThisWeek?.let {
             data["usageMinutesThisWeek"] = it
         }
@@ -471,7 +512,9 @@ object FirebaseSmartHomeRepository {
                         switchName to isOn
                     }
                     ?.toMap()
-                    .orEmpty()
+                    .orEmpty(),
+            turnedOnAt =
+                (get("turnedOnAt") as? Number)?.toLong() ?: 0L
         )
     }
 
