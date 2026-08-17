@@ -406,7 +406,11 @@ object FirebaseSmartHomeRepository {
             "scheduleStart" to scheduleStart,
             "scheduleEnd" to scheduleEnd,
             "maxOnDurationMinutes" to maxOnDurationMinutes,
-            "switches" to switches
+            "switches" to switches,
+            "cameraSnapshotUri" to cameraSnapshotUri,
+            "cameraStreamUri" to cameraStreamUri,
+            "cameraLastSnapshotAt" to cameraLastSnapshotAt,
+            "cameraMotionDetected" to cameraMotionDetected
         )
 
         if (turnedOnAt > 0L) {
@@ -476,6 +480,10 @@ object FirebaseSmartHomeRepository {
                     }
                     ?.toMap()
                     .orEmpty(),
+            cameraSnapshotUri = get("cameraSnapshotUri") as? String ?: "",
+            cameraStreamUri = get("cameraStreamUri") as? String ?: "",
+            cameraLastSnapshotAt = get("cameraLastSnapshotAt") as? String ?: "Just now",
+            cameraMotionDetected = get("cameraMotionDetected") as? Boolean ?: false,
             turnedOnAt =
                 (get("turnedOnAt") as? Number)?.toLong() ?: 0L
         )

@@ -1,22 +1,30 @@
 package com.example.smarthomemonitoring.ui.screens.device
 
 import android.app.TimePickerDialog
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MotionPhotosOn
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +44,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -123,8 +132,8 @@ fun DeviceDetailsScreen(
                 DeviceType.LIGHT -> LightSettings(device = device, onUpdateDevice = onUpdateDevice)
                 DeviceType.IRON -> IronSettings(device = device, onUpdateDevice = onUpdateDevice)
                 DeviceType.MULTI_SWITCH -> SwitchSettings(device = device, onUpdateDevice = onUpdateDevice)
-                DeviceType.OUTLET,
-                DeviceType.CAMERA -> Unit
+                DeviceType.CAMERA -> CameraSettings(device = device, onUpdateDevice = onUpdateDevice)
+                DeviceType.OUTLET -> Unit
             }
 
             OutlinedButton(
@@ -142,6 +151,154 @@ fun DeviceDetailsScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun CameraSettings(
+    device: Device,
+    onUpdateDevice: (Device) -> Unit
+) {
+    SettingsCard {
+        Text("Security camera", style = MaterialTheme.typography.titleMedium)
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .padding(top = 10.dp)
+                .background(
+                    color = Color(0xFF17211B),
+                    shape = RoundedCornerShape(16.dp)
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.CameraAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(42.dp),
+                    tint = Color.White
+                )
+                Text(
+                    text = "Mock snapshot",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White
+                )
+                Text(
+                    text = device.cameraSnapshotUri.ifBlank { "mock://camera/snapshot.jpg" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFC8EADB)
+                )
+            }
+
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = if (device.status == DeviceStatus.ON) Color(0xFFD32F2F) else Color(0xFF757575),
+                contentColor = Color.White
+            ) {
+                Text(
+                    text = if (device.status == DeviceStatus.ON) "LIVE" else "OFFLINE",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+
+        CameraInfoRow(
+            icon = Icons.Filled.PhotoCamera,
+            label = "Last snapshot",
+            value = device.cameraLastSnapshotAt
+        )
+        CameraInfoRow(
+            icon = Icons.Filled.Videocam,
+            label = "Mock stream",
+            value = device.cameraStreamUri.ifBlank { "mock://camera/live.mjpeg" }
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MotionPhotosOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Column {
+                    Text("Motion marker", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = if (device.cameraMotionDetected) "Motion detected in latest mock frame" else "No motion in latest mock frame",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Switch(
+                checked = device.cameraMotionDetected,
+                onCheckedChange = { onUpdateDevice(device.copy(cameraMotionDetected = it)) }
+            )
+        }
+
+        OutlinedTextField(
+            value = device.cameraSnapshotUri,
+            onValueChange = { onUpdateDevice(device.copy(cameraSnapshotUri = it)) },
+            label = { Text("Snapshot URI") },
+            leadingIcon = { Icon(Icons.Filled.PhotoCamera, contentDescription = null) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = device.cameraStreamUri,
+            onValueChange = { onUpdateDevice(device.copy(cameraStreamUri = it)) },
+            label = { Text("Stream URI") },
+            leadingIcon = { Icon(Icons.Filled.Videocam, contentDescription = null) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun CameraInfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Column {
+            Text(text = label, style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

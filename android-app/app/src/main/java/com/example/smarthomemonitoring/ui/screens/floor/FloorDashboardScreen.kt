@@ -274,7 +274,13 @@ private fun AddDeviceDialog(
                             maxOnDurationMinutes = maxOnMinutes.toIntOrNull()?.coerceIn(5, 120) ?: 15,
                             switches = if (selectedType == DeviceType.MULTI_SWITCH)
                                 mapOf("Switch 1" to false, "Switch 2" to false, "Switch 3" to false)
-                            else emptyMap()
+                            else emptyMap(),
+                            cameraSnapshotUri = if (selectedType == DeviceType.CAMERA)
+                                "mock://camera/${name.trim().lowercase().replace(" ", "-")}/snapshot.jpg"
+                            else "",
+                            cameraStreamUri = if (selectedType == DeviceType.CAMERA)
+                                "mock://camera/${name.trim().lowercase().replace(" ", "-")}/live.mjpeg"
+                            else ""
                         )
                     )
                 }

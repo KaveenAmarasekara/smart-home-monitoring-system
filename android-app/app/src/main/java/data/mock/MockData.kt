@@ -49,7 +49,11 @@ object MockData {
             status = DeviceStatus.ON,
             room = "Entrance",
             gridX = 0,
-            gridY = 2
+            gridY = 2,
+            cameraSnapshotUri = "mock://camera/front-camera/snapshot.jpg",
+            cameraStreamUri = "mock://camera/front-camera/live.mjpeg",
+            cameraLastSnapshotAt = "Today 08:45",
+            cameraMotionDetected = true
         ),
 
         Device(
@@ -107,7 +111,10 @@ object MockData {
             status = DeviceStatus.ON,
             room = "Hallway",
             gridX = 1,
-            gridY = 1
+            gridY = 1,
+            cameraSnapshotUri = "mock://camera/hallway-camera/snapshot.jpg",
+            cameraStreamUri = "mock://camera/hallway-camera/live.mjpeg",
+            cameraLastSnapshotAt = "Today 08:42"
         ),
 
         Device(

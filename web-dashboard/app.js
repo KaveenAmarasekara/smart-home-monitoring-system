@@ -34,6 +34,7 @@ const db = getFirestore(app);
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const els = {
   authPanel: document.querySelector("#authPanel"),
+  cameraGrid: document.querySelector("#cameraGrid"),
   connectionStatus: document.querySelector("#connectionStatus"),
   dashboard: document.querySelector("#dashboard"),
   deviceList: document.querySelector("#deviceList"),
@@ -126,6 +127,7 @@ function listenForDevices() {
           `${a.floorId}-${a.gridY}-${a.gridX}`.localeCompare(`${b.floorId}-${b.gridY}-${b.gridX}`)
         );
       renderDevices();
+      renderCameras();
       renderMetrics();
       applyDeviceAutomation();
       if (selectedDeviceId) renderDetailPanel(selectedDeviceId);
@@ -296,6 +298,42 @@ function renderDevices() {
 }
 
 // ── Render: metrics ────────────────────────────────────────────────────────────
+function renderCameras() {
+  if (!els.cameraGrid) return;
+  const cameras = devices.filter((d) => d.type === "CAMERA");
+
+  els.cameraGrid.innerHTML = !cameras.length
+    ? `<p class="empty">No camera devices yet. Add a camera to monitor mock snapshots and streams.</p>`
+    : cameras.map((camera) => {
+      const isLive = camera.status === "ON";
+      const streamUri = camera.cameraStreamUri || mockCameraUri(camera, "live.mjpeg");
+      const snapshotUri = camera.cameraSnapshotUri || mockCameraUri(camera, "snapshot.jpg");
+
+      return `
+        <button class="camera-tile" data-camera-id="${escapeHtml(camera.id)}" type="button">
+          <span class="camera-feed ${isLive ? "live" : "offline"}">
+            <span class="camera-scanline"></span>
+            <span class="camera-feed-icon">CAM</span>
+            <span class="camera-feed-status">${isLive ? "LIVE" : "OFFLINE"}</span>
+          </span>
+          <span class="camera-tile-body">
+            <strong>${escapeHtml(camera.name)}</strong>
+            <span>${escapeHtml(camera.room)} - ${escapeHtml(snapshotUri)}</span>
+            <span>${escapeHtml(streamUri)}</span>
+            ${camera.cameraMotionDetected ? `<em>Motion detected</em>` : ""}
+          </span>
+        </button>`;
+    }).join("");
+
+  document.querySelectorAll("[data-camera-id]").forEach((tile) => {
+    tile.addEventListener("click", () => {
+      selectedDeviceId = tile.dataset.cameraId;
+      renderDetailPanel(selectedDeviceId);
+      openDetailPanel();
+    });
+  });
+}
+
 function renderMetrics() {
   els.totalDevices.textContent = devices.length;
   els.onlineDevices.textContent = devices.filter((d) => d.status === "ON").length;
@@ -445,6 +483,37 @@ function renderDetailPanel(deviceId) {
       </div>`;
   }
 
+  if (device.type === "CAMERA") {
+    const snapshotUri = device.cameraSnapshotUri || mockCameraUri(device, "snapshot.jpg");
+    const streamUri = device.cameraStreamUri || mockCameraUri(device, "live.mjpeg");
+    typeControls = `
+      <div class="camera-preview ${device.status === "ON" ? "live" : "offline"}">
+        <div class="camera-preview-grid"></div>
+        <div class="camera-icon">CAM</div>
+        <div>${escapeHtml(device.name)} - Mock Snapshot</div>
+        <div class="live-badge">${device.status === "ON" ? "LIVE" : "OFFLINE"}</div>
+      </div>
+      <div class="detail-section">
+        <label class="detail-label">Snapshot URI</label>
+        <input id="dp-camera-snapshot" type="text" value="${escapeHtml(snapshotUri)}" />
+      </div>
+      <div class="detail-section">
+        <label class="detail-label">Mock stream URI</label>
+        <input id="dp-camera-stream" type="text" value="${escapeHtml(streamUri)}" />
+      </div>
+      <div class="detail-row">
+        <div>
+          <strong>Motion marker</strong>
+          <div class="device-meta">${device.cameraMotionDetected ? "Motion detected in latest mock frame" : "No motion in latest mock frame"}</div>
+        </div>
+        <button class="toggle ${device.cameraMotionDetected ? "on" : ""}" id="dp-camera-motion"></button>
+      </div>
+      <div class="detail-row">
+        <span>Last snapshot</span>
+        <strong>${escapeHtml(device.cameraLastSnapshotAt || "Just now")}</strong>
+      </div>`;
+  }
+
   if (device.type === "MULTI_SWITCH") {
     const switchButtons = Object.entries(device.switches ?? {}).map(([name, on]) => `
       <div class="detail-row">
@@ -521,6 +590,21 @@ function renderDetailPanel(deviceId) {
     });
   });
 
+  document.querySelector("#dp-camera-snapshot")?.addEventListener("change", (e) => {
+    updateDevice(device, { cameraSnapshotUri: e.target.value });
+  });
+
+  document.querySelector("#dp-camera-stream")?.addEventListener("change", (e) => {
+    updateDevice(device, { cameraStreamUri: e.target.value });
+  });
+
+  document.querySelector("#dp-camera-motion")?.addEventListener("click", () => {
+    updateDevice(device, {
+      cameraMotionDetected: !device.cameraMotionDetected,
+      cameraLastSnapshotAt: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+    });
+  });
+
   document.querySelector("#dp-delete")?.addEventListener("click", async () => {
     if (!confirm(`Delete "${device.name}"?`)) return;
     await deleteDoc(doc(db, "devices", device.id));
@@ -556,6 +640,10 @@ document.querySelector("#addDeviceSubmit")?.addEventListener("click", async () =
     switches: type === "MULTI_SWITCH"
       ? { "Switch 1": false, "Switch 2": false, "Switch 3": false }
       : {},
+    cameraSnapshotUri: type === "CAMERA" ? mockCameraUri({ name }, "snapshot.jpg") : "",
+    cameraStreamUri: type === "CAMERA" ? mockCameraUri({ name }, "live.mjpeg") : "",
+    cameraLastSnapshotAt: "Just now",
+    cameraMotionDetected: false,
     usageMinutesThisWeek: 0,
     safetyShutdownsThisMonth: 0,
   };
@@ -654,6 +742,14 @@ function clearListeners() {
 
 function setMessage(msg) { els.message.textContent = msg; }
 function formatFloor(id) { return id === "ground" ? "Ground Floor" : "First Floor"; }
+function mockCameraUri(device, file) {
+  const slug = String(device?.name || "camera")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "camera";
+  return `mock://camera/${slug}/${file}`;
+}
 function formatMinutes(m) {
   const h = Math.floor(m / 60), r = m % 60;
   return h === 0 ? `${r}m` : `${h}h ${r}m`;

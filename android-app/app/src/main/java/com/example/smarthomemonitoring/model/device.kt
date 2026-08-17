@@ -21,6 +21,12 @@ data class Device(
     // Multi-switch
     val switches: Map<String, Boolean> = emptyMap(),
 
+    // Security camera mock feed settings
+    val cameraSnapshotUri: String = "",
+    val cameraStreamUri: String = "",
+    val cameraLastSnapshotAt: String = "Just now",
+    val cameraMotionDetected: Boolean = false,
+
     // Epoch millis when device was last turned ON; 0 means not active
     val turnedOnAt: Long = 0L
 )
