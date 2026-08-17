@@ -6,5 +6,6 @@ data class AppNotification(
     val description: String,
     val time: String,
     val important: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val read: Boolean = false
 )

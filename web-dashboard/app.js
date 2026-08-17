@@ -9,16 +9,13 @@ import {
 import {
   addDoc,
   collection,
+  deleteDoc,
   deleteField,
   doc,
   getDocs,
   getFirestore,
-  limit,
   onSnapshot,
-  query,
   setDoc,
-  updateDoc,
-  writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -46,7 +43,6 @@ const els = {
   notificationList: document.querySelector("#notificationList"),
   onlineDevices: document.querySelector("#onlineDevices"),
   passwordInput: document.querySelector("#passwordInput"),
-  seedButton: document.querySelector("#seedButton"),
   sessionLabel: document.querySelector("#sessionLabel"),
   settingsList: document.querySelector("#settingsList"),
   shutdownCount: document.querySelector("#shutdownCount"),
@@ -92,12 +88,6 @@ els.loginForm.addEventListener("submit", async (e) => {
 
 els.signOutButton.addEventListener("click", () => signOut(auth));
 
-els.seedButton.addEventListener("click", async () => {
-  setMessage("Seeding…");
-  await seedDemoData();
-  setMessage("Demo data seeded.");
-});
-
 onAuthStateChanged(auth, (user) => {
   clearListeners();
 
@@ -123,6 +113,8 @@ onAuthStateChanged(auth, (user) => {
   listenForSettings(user.uid);
 });
 
+els.clearReadNotifications?.addEventListener("click", clearReadNotifications);
+
 // ── Listeners ─────────────────────────────────────────────────────────────────
 function listenForDevices() {
   const unsub = onSnapshot(
@@ -135,6 +127,7 @@ function listenForDevices() {
         );
       renderDevices();
       renderMetrics();
+      applyDeviceAutomation();
       if (selectedDeviceId) renderDetailPanel(selectedDeviceId);
     },
     (err) => setMessage(err.message),
@@ -171,7 +164,11 @@ function listenForSettings(uid) {
 }
 
 // ── Auto-shutdown ticker (every 20 s) ─────────────────────────────────────────
-setInterval(async () => {
+setInterval(() => {
+  applyDeviceAutomation();
+}, 20_000);
+
+async function applyDeviceAutomation() {
   const now = Date.now();
 
   // Schedule automation for LIGHT devices.
@@ -183,12 +180,12 @@ setInterval(async () => {
     const targetStatus = shouldBeOn ? "ON" : "OFF";
 
     if (device.status !== targetStatus) {
-      await updateDevice(device, { status: targetStatus });
+      await updateDevice(device, { status: targetStatus }, { notifyStatus: false });
       await pushNotification({
         title: `${device.name} schedule`,
         description: `Light switched ${shouldBeOn ? "on" : "off"} automatically.`,
         important: false,
-      });
+      }, `schedule_${device.id}_${targetStatus}_${Math.floor(now / 60_000)}`);
     }
   }
 
@@ -199,12 +196,12 @@ setInterval(async () => {
     const elapsedMin = (now - turnedOnAt) / 60_000;
     const maxMin = Number(device.maxOnDurationMinutes ?? 15);
     if (elapsedMin >= maxMin) {
-      await updateDevice(device, { status: "OFF" });
+      await updateDevice(device, { status: "OFF" }, { notifyStatus: false });
       await pushNotification({
         title: `${device.name} automatically switched off`,
         description: `Maximum ON duration of ${maxMin} minutes reached.`,
         important: true,
-      });
+      }, `auto_${device.id}_${turnedOnAt}_${maxMin}`);
     }
   }
   // Re-render to refresh countdowns
@@ -212,12 +209,12 @@ setInterval(async () => {
     renderDevices();
     if (selectedDeviceId) renderDetailPanel(selectedDeviceId);
   }
-}, 20_000);
+}
 
 // ── Render: device list ────────────────────────────────────────────────────────
 function renderDevices() {
   if (devices.length === 0) {
-    els.deviceList.innerHTML = `<p class="empty">No devices found. Click "Seed demo data" or add a device.</p>`;
+    els.deviceList.innerHTML = `<p class="empty">No devices found. Add a device to start monitoring Firebase data.</p>`;
     return;
   }
 
@@ -323,11 +320,27 @@ function renderNotifications() {
   els.notificationList.innerHTML = !visible.length
     ? `<p class="empty">No visible notifications.</p>`
     : visible.map((n) => `
-        <div class="notification-row ${n.important ? "important" : ""}">
+        <div class="notification-row ${n.read ? "read" : ""} ${n.important && !n.read ? "important" : ""}">
           <strong>${escapeHtml(n.title)}</strong>
           <p>${escapeHtml(n.description)}</p>
-          <span>${escapeHtml(notificationDisplayTime(n))}</span>
+          <span>${escapeHtml(notificationDisplayTime(n))}${n.read ? " - Read" : ""}</span>
+          <div class="notification-actions">
+            ${n.read ? "" : `<button class="ghost icon-btn" data-mark-read="${escapeHtml(n.id)}">Mark read</button>`}
+            <button class="ghost icon-btn" data-clear-notification="${escapeHtml(n.id)}">Clear</button>
+          </div>
         </div>`).join("");
+
+  document.querySelectorAll("[data-mark-read]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await setDoc(doc(db, "notifications", btn.dataset.markRead), { read: true }, { merge: true });
+    });
+  });
+
+  document.querySelectorAll("[data-clear-notification]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await deleteDoc(doc(db, "notifications", btn.dataset.clearNotification));
+    });
+  });
 }
 
 // ── Render: settings ───────────────────────────────────────────────────────────
@@ -425,9 +438,9 @@ function renderDetailPanel(deviceId) {
 
   if (device.type === "CAMERA") {
     typeControls = `
-      <div class="camera-mock">
+      <div class="camera-preview">
         <div class="camera-icon">📷</div>
-        <div>${escapeHtml(device.name)} · Mock Stream</div>
+        <div>${escapeHtml(device.name)} · Live Stream</div>
         <div class="live-badge">● LIVE</div>
       </div>`;
   }
@@ -510,7 +523,6 @@ function renderDetailPanel(deviceId) {
 
   document.querySelector("#dp-delete")?.addEventListener("click", async () => {
     if (!confirm(`Delete "${device.name}"?`)) return;
-    const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js");
     await deleteDoc(doc(db, "devices", device.id));
     closeDetailPanel();
   });
@@ -554,8 +566,9 @@ document.querySelector("#addDeviceSubmit")?.addEventListener("click", async () =
 });
 
 // ── Core helpers ───────────────────────────────────────────────────────────────
-async function updateDevice(device, changes) {
+async function updateDevice(device, changes, options = {}) {
   if (!device) return;
+  const { notifyStatus = true } = options;
 
   const finalChanges = { ...changes };
   if ("status" in changes) {
@@ -568,11 +581,33 @@ async function updateDevice(device, changes) {
 
   const { id: _id, ...deviceData } = device;
   await setDoc(doc(db, "devices", device.id), { ...deviceData, ...finalChanges }, { merge: true });
+
+  if (notifyStatus && "status" in changes && changes.status !== device.status) {
+    await pushNotification({
+      title: `${device.name} status changed`,
+      description: `${device.name} switched ${String(changes.status).toLowerCase()}.`,
+      important: changes.status === "ERROR" || changes.status === "DISCONNECTED",
+    }, `status_${device.id}_${Date.now()}`);
+  }
 }
 
-async function pushNotification(data) {
+async function pushNotification(data, id = null) {
   const time = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  await addDoc(collection(db, "notifications"), { ...data, time, timestamp: Date.now() });
+  const payload = { ...data, time, timestamp: Date.now(), read: false };
+  if (id) {
+    await setDoc(doc(db, "notifications", id), payload, { merge: true });
+  } else {
+    await addDoc(collection(db, "notifications"), payload);
+  }
+}
+
+async function clearReadNotifications() {
+  const snapshot = await getDocs(collection(db, "notifications"));
+  await Promise.all(
+    snapshot.docs
+      .filter((item) => item.data()?.read === true)
+      .map((item) => deleteDoc(item.ref))
+  );
 }
 
 function notificationTimestampMs(notification) {
@@ -612,30 +647,6 @@ function isNowWithinSchedule(start, end) {
   return nowMin >= startMin || nowMin < endMin;
 }
 
-async function seedDemoData() {
-  const existingDevices = await getDocs(query(collection(db, "devices"), limit(1)));
-  if (existingDevices.empty) {
-    const batch = writeBatch(db);
-    demoDevices.forEach((device) => batch.set(doc(db, "devices", device.id), withoutId(device)));
-    await batch.commit();
-  }
-
-  const existingNotifications = await getDocs(query(collection(db, "notifications"), limit(1)));
-  if (existingNotifications.empty) {
-    const batch = writeBatch(db);
-    demoNotifications.forEach((n) => batch.set(doc(db, "notifications", n.id), withoutId(n)));
-    await batch.commit();
-  }
-
-  const user = auth.currentUser;
-  if (user) {
-    await setDoc(
-      doc(db, "users", user.uid, "settings", "notifications"),
-      settings, { merge: true }
-    );
-  }
-}
-
 function clearListeners() {
   unsubscribeHandlers.forEach((u) => u());
   unsubscribeHandlers = [];
@@ -647,7 +658,6 @@ function formatMinutes(m) {
   const h = Math.floor(m / 60), r = m % 60;
   return h === 0 ? `${r}m` : `${h}h ${r}m`;
 }
-function withoutId({ id, ...rest }) { return rest; }
 function escapeHtml(v) {
   return String(v ?? "")
     .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
@@ -665,22 +675,4 @@ function ironCountdownHtml(device) {
   return `<span class="${remaining <= 2 ? "countdown danger" : "countdown"}">⏱ ${remaining} min left</span>`;
 }
 
-// ── Demo data ──────────────────────────────────────────────────────────────────
-const demoDevices = [
-  { id: "device1", floorId: "ground", name: "Living Room Light", type: "LIGHT", status: "ON", room: "Living Room", gridX: 0, gridY: 0, brightness: 75, scheduleEnabled: true, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 480, safetyShutdownsThisMonth: 0 },
-  { id: "device2", floorId: "ground", name: "TV Outlet", type: "OUTLET", status: "OFF", room: "Living Room", gridX: 1, gridY: 0, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 75, safetyShutdownsThisMonth: 0 },
-  { id: "device3", floorId: "ground", name: "Clothing Iron", type: "IRON", status: "OFF", room: "Laundry Room", gridX: 2, gridY: 1, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 75, safetyShutdownsThisMonth: 2 },
-  { id: "device4", floorId: "ground", name: "Front Camera", type: "CAMERA", status: "ON", room: "Entrance", gridX: 0, gridY: 2, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 300, safetyShutdownsThisMonth: 0 },
-  { id: "device5", floorId: "ground", name: "Kitchen Switch Unit", type: "MULTI_SWITCH", status: "OFF", room: "Kitchen", gridX: 3, gridY: 2, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: { "Main Light": false, "Counter Light": false, "Dining Light": false }, usageMinutesThisWeek: 180, safetyShutdownsThisMonth: 0 },
-  { id: "device6", floorId: "ground", name: "Garage Outlet", type: "OUTLET", status: "DISCONNECTED", room: "Garage", gridX: 3, gridY: 3, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 75, safetyShutdownsThisMonth: 0 },
-  { id: "device7", floorId: "first", name: "Bedroom Light", type: "LIGHT", status: "OFF", room: "Master Bedroom", gridX: 0, gridY: 0, brightness: 60, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 145, safetyShutdownsThisMonth: 0 },
-  { id: "device8", floorId: "first", name: "Bedroom Outlet", type: "OUTLET", status: "ON", room: "Master Bedroom", gridX: 1, gridY: 0, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 360, safetyShutdownsThisMonth: 0 },
-  { id: "device9", floorId: "first", name: "Hallway Camera", type: "CAMERA", status: "ON", room: "Hallway", gridX: 1, gridY: 1, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 75, safetyShutdownsThisMonth: 0 },
-  { id: "device10", floorId: "first", name: "Study Light", type: "LIGHT", status: "ERROR", room: "Study Room", gridX: 2, gridY: 1, brightness: 100, scheduleEnabled: false, scheduleStart: "18:00", scheduleEnd: "23:00", maxOnDurationMinutes: 15, switches: {}, usageMinutesThisWeek: 75, safetyShutdownsThisMonth: 0 },
-];
 
-const demoNotifications = [
-  { id: "notification1", title: "Iron automatically switched off", description: "Maximum active duration of 15 minutes was reached.", time: "10:35 AM", important: true },
-  { id: "notification2", title: "Garage Outlet disconnected", description: "The device is currently unreachable.", time: "9:20 AM", important: true },
-  { id: "notification3", title: "Living Room schedule", description: "Light switched on automatically.", time: "Yesterday", important: false },
-];

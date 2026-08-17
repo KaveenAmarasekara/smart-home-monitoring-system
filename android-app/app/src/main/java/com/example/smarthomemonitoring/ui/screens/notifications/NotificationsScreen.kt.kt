@@ -1,6 +1,8 @@
 package com.example.smarthomemonitoring.ui.screens.notifications
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,8 +17,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,6 +31,9 @@ import com.example.smarthomemonitoring.data.model.AppNotification
 @Composable
 fun NotificationsScreen(
     notifications: List<AppNotification>,
+    onMarkRead: (AppNotification) -> Unit,
+    onClear: (AppNotification) -> Unit,
+    onClearRead: () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -39,6 +46,14 @@ fun NotificationsScreen(
                 },
                 title = {
                     Text("Notifications")
+                },
+                actions = {
+                    TextButton(
+                        onClick = onClearRead,
+                        enabled = notifications.any { it.read }
+                    ) {
+                        Text("Clear read")
+                    }
                 }
             )
         }
@@ -60,10 +75,9 @@ fun NotificationsScreen(
             } else {
                 notifications.forEach { notification ->
                     NotificationCard(
-                        title = notification.title,
-                        description = notification.description,
-                        time = notification.time,
-                        important = notification.important
+                        notification = notification,
+                        onMarkRead = { onMarkRead(notification) },
+                        onClear = { onClear(notification) }
                     )
 
                     Spacer(
@@ -77,10 +91,9 @@ fun NotificationsScreen(
 
 @Composable
 private fun NotificationCard(
-    title: String,
-    description: String,
-    time: String,
-    important: Boolean
+    notification: AppNotification,
+    onMarkRead: () -> Unit,
+    onClear: () -> Unit
 ) {
     Card(
         modifier =
@@ -92,14 +105,18 @@ private fun NotificationCard(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    if (important) {
+                    if (notification.important && !notification.read) {
                         MaterialTheme
                             .colorScheme
                             .errorContainer
-                    } else {
+                    } else if (!notification.read) {
                         MaterialTheme
                             .colorScheme
                             .secondaryContainer
+                    } else {
+                        MaterialTheme
+                            .colorScheme
+                            .surfaceVariant
                     }
             )
     ) {
@@ -110,7 +127,7 @@ private fun NotificationCard(
         ) {
 
             Text(
-                text = title,
+                text = notification.title,
                 style =
                     MaterialTheme.typography.titleMedium
             )
@@ -120,7 +137,7 @@ private fun NotificationCard(
             )
 
             Text(
-                text = description
+                text = notification.description
             )
 
             Spacer(
@@ -128,10 +145,26 @@ private fun NotificationCard(
             )
 
             Text(
-                text = time,
+                text = "${notification.time}${if (notification.read) " - Read" else ""}",
                 style =
                     MaterialTheme.typography.labelSmall
             )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                if (!notification.read) {
+                    OutlinedButton(onClick = onMarkRead) {
+                        Text("Mark read")
+                    }
+                }
+                TextButton(onClick = onClear) {
+                    Text("Clear")
+                }
+            }
         }
     }
 }

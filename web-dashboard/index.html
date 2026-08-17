@@ -59,7 +59,29 @@
                 <p class="eyebrow">Firestore collection</p>
                 <h2>Devices</h2>
               </div>
-              <button id="seedButton" class="ghost">Seed demo data</button>
+              <button id="addDeviceBtn" class="ghost">Add device</button>
+            </div>
+            <div id="addDeviceForm" class="add-device-form hidden">
+              <div class="add-device-grid">
+                <input id="newDeviceName" type="text" placeholder="Device name" />
+                <input id="newDeviceRoom" type="text" placeholder="Room" />
+                <select id="newDeviceType">
+                  <option value="LIGHT">Light</option>
+                  <option value="OUTLET">Outlet</option>
+                  <option value="IRON">Iron</option>
+                  <option value="CAMERA">Camera</option>
+                  <option value="MULTI_SWITCH">Multi-switch</option>
+                </select>
+                <select id="newDeviceFloor">
+                  <option value="ground">Ground Floor</option>
+                  <option value="first">First Floor</option>
+                </select>
+                <input id="newDeviceX" type="number" min="0" max="3" value="0" />
+                <input id="newDeviceY" type="number" min="0" max="3" value="0" />
+              </div>
+              <div class="add-device-actions">
+                <button id="addDeviceSubmit" type="button">Add device</button>
+              </div>
             </div>
             <div id="deviceList" class="list"></div>
           </article>
@@ -81,6 +103,7 @@
                   <p class="eyebrow">Firestore collection</p>
                   <h2>Notifications</h2>
                 </div>
+                <button id="clearReadNotifications" class="ghost">Clear read</button>
               </div>
               <div id="notificationList" class="list compact"></div>
             </article>
@@ -90,6 +113,15 @@
 
       <p id="message" class="message"></p>
     </main>
+
+    <div id="detailOverlay" class="detail-overlay"></div>
+    <aside id="detailPanel" class="detail-panel">
+      <div class="detail-panel-header">
+        <h2>Device details</h2>
+        <button id="detailClose" class="ghost icon-btn">Close</button>
+      </div>
+      <div id="detailContent" class="detail-panel-body"></div>
+    </aside>
 
     <script type="module" src="./app.js"></script>
   </body>

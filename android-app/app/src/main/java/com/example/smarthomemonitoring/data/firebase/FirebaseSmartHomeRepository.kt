@@ -1,6 +1,5 @@
 package com.example.smarthomemonitoring.data.firebase
 
-import com.example.smarthomemonitoring.data.mock.MockData
 import com.example.smarthomemonitoring.data.model.AppNotification
 import com.example.smarthomemonitoring.data.model.Device
 import com.example.smarthomemonitoring.data.model.DeviceStatus
@@ -139,6 +138,42 @@ object FirebaseSmartHomeRepository {
         notificationsCollection
             .document(notification.id)
             .set(notification.toFirestoreMap())
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun markNotificationRead(
+        notificationId: String,
+        onError: (Exception) -> Unit
+    ) {
+        notificationsCollection
+            .document(notificationId)
+            .set(mapOf("read" to true), SetOptions.merge())
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun clearNotification(
+        notificationId: String,
+        onError: (Exception) -> Unit
+    ) {
+        notificationsCollection
+            .document(notificationId)
+            .delete()
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun clearReadNotifications(
+        onError: (Exception) -> Unit
+    ) {
+        notificationsCollection
+            .whereEqualTo("read", true)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                firestore.runBatch { batch ->
+                    snapshot.documents.forEach { document ->
+                        batch.delete(document.reference)
+                    }
+                }.addOnFailureListener { onError(it) }
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -302,82 +337,7 @@ object FirebaseSmartHomeRepository {
     fun seedDefaultDataIfNeeded(
         onError: (Exception) -> Unit
     ) {
-        seedDefaultDevicesIfNeeded(onError)
-        seedDefaultNotificationsIfNeeded(onError)
         seedDefaultUserSettingsIfNeeded(onError)
-    }
-
-    fun seedDefaultDevicesIfNeeded(
-        onError: (Exception) -> Unit
-    ) {
-        devicesCollection
-            .limit(1)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                if (!snapshot.isEmpty) {
-                    return@addOnSuccessListener
-                }
-
-                firestore.runBatch { batch ->
-                    MockData.groundFloorDevices.forEach { device ->
-                        batch.set(
-                            devicesCollection.document(device.id),
-                            device.toFirestoreMap(
-                                floorId = GROUND_FLOOR_ID,
-                                usageMinutesThisWeek =
-                                    defaultUsageMinutes(device.id),
-                                safetyShutdownsThisMonth =
-                                    defaultSafetyShutdowns(device.id)
-                            )
-                        )
-                    }
-
-                    MockData.firstFloorDevices.forEach { device ->
-                        batch.set(
-                            devicesCollection.document(device.id),
-                            device.toFirestoreMap(
-                                floorId = FIRST_FLOOR_ID,
-                                usageMinutesThisWeek =
-                                    defaultUsageMinutes(device.id),
-                                safetyShutdownsThisMonth =
-                                    defaultSafetyShutdowns(device.id)
-                            )
-                        )
-                    }
-                }.addOnFailureListener {
-                    onError(it)
-                }
-            }
-            .addOnFailureListener {
-                onError(it)
-            }
-    }
-
-    private fun seedDefaultNotificationsIfNeeded(
-        onError: (Exception) -> Unit
-    ) {
-        notificationsCollection
-            .limit(1)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                if (!snapshot.isEmpty) {
-                    return@addOnSuccessListener
-                }
-
-                firestore.runBatch { batch ->
-                    defaultNotifications().forEach { notification ->
-                        batch.set(
-                            notificationsCollection.document(notification.id),
-                            notification.toFirestoreMap()
-                        )
-                    }
-                }.addOnFailureListener {
-                    onError(it)
-                }
-            }
-            .addOnFailureListener {
-                onError(it)
-            }
     }
 
     private fun seedDefaultUserSettingsIfNeeded(
@@ -540,7 +500,8 @@ object FirebaseSmartHomeRepository {
             description = get("description") as? String ?: return null,
             time = get("time") as? String ?: "",
             important = get("important") as? Boolean ?: false,
-            timestamp = (get("timestamp") as? Number)?.toLong() ?: 0L
+            timestamp = (get("timestamp") as? Number)?.toLong() ?: 0L,
+            read = get("read") as? Boolean ?: false
         )
     }
 
@@ -550,7 +511,8 @@ object FirebaseSmartHomeRepository {
             "description" to description,
             "time" to time,
             "important" to important,
-            "timestamp" to timestamp
+            "timestamp" to timestamp,
+            "read" to read
         )
     }
 
@@ -582,55 +544,6 @@ object FirebaseSmartHomeRepository {
         } else {
             "${hours}h ${minutes}m"
         }
-    }
-
-    private fun defaultUsageMinutes(
-        deviceId: String
-    ): Int {
-        return when (deviceId) {
-            "device1" -> 480
-            "device8" -> 360
-            "device4" -> 300
-            "device5" -> 180
-            "device7" -> 145
-            else -> 75
-        }
-    }
-
-    private fun defaultSafetyShutdowns(
-        deviceId: String
-    ): Int {
-        return if (deviceId == "device3") {
-            2
-        } else {
-            0
-        }
-    }
-
-    private fun defaultNotifications(): List<AppNotification> {
-        return listOf(
-            AppNotification(
-                id = "notification1",
-                title = "Iron automatically switched off",
-                description = "Maximum active duration of 15 minutes was reached.",
-                time = "10:35 AM",
-                important = true
-            ),
-            AppNotification(
-                id = "notification2",
-                title = "Garage Outlet disconnected",
-                description = "The device is currently unreachable.",
-                time = "9:20 AM",
-                important = true
-            ),
-            AppNotification(
-                id = "notification3",
-                title = "Living Room schedule",
-                description = "Light switched on automatically.",
-                time = "Yesterday",
-                important = false
-            )
-        )
     }
 
     const val GROUND_FLOOR_ID = "ground"

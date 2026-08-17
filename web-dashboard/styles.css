@@ -378,6 +378,10 @@ input[type="range"] {
   border-color: #f9c4b3;
 }
 
+.notification-row.read {
+  opacity: 0.72;
+}
+
 .notification-row strong {
   display: block;
   font-size: 0.88rem;
@@ -394,6 +398,13 @@ input[type="range"] {
   display: block;
   font-size: 0.75rem;
   margin-top: 6px;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 /* ── Device detail panel ── */
@@ -496,8 +507,8 @@ input[type="range"] {
 
 .time-input { min-height: 36px; width: 120px; padding: 0 8px; }
 
-/* Camera mock */
-.camera-mock {
+/* Camera preview */
+.camera-preview {
   background: #1c2024;
   border-radius: 12px;
   color: #fff;
