@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Home Monitor</title>
+    <title>Smart Home Firebase Showcase</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="shell">
       <section class="topbar">
         <div>
-          <p class="eyebrow">Firebase Live</p>
+          <p class="eyebrow">Firebase Live Demo</p>
           <h1>Smart Home Monitor</h1>
         </div>
         <div class="session">
@@ -22,13 +22,13 @@
 
       <section id="authPanel" class="panel auth-panel">
         <div>
-          <h2>Sign in</h2>
-          <p>Use the same credentials as in the Android app. New accounts are created automatically.</p>
+          <h2>Demo login</h2>
+          <p>Use the same email and password you use in the Android app.</p>
         </div>
         <form id="loginForm" class="login-form">
           <input id="emailInput" type="email" placeholder="Email" value="test@example.com" required />
           <input id="passwordInput" type="password" placeholder="Password" value="123456" required />
-          <button type="submit">Connect</button>
+          <button type="submit">Connect to Firebase</button>
         </form>
       </section>
 
@@ -40,7 +40,7 @@
           </article>
           <article class="metric">
             <span>Online now</span>
-            <strong id="onlineDevices" class="metric-green">0</strong>
+            <strong id="onlineDevices">0</strong>
           </article>
           <article class="metric">
             <span>Weekly usage</span>
@@ -56,40 +56,11 @@
           <article class="panel devices-panel">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Firestore · Real-time</p>
+                <p class="eyebrow">Firestore collection</p>
                 <h2>Devices</h2>
               </div>
-              <div class="heading-actions">
-                <button id="addDeviceBtn" class="ghost">+ Add device</button>
-                <button id="seedButton" class="ghost">Seed demo data</button>
-              </div>
+              <button id="seedButton" class="ghost">Seed demo data</button>
             </div>
-
-            <!-- Add device inline form -->
-            <div id="addDeviceForm" class="add-device-form hidden">
-              <div class="add-device-grid">
-                <input id="newDeviceName" type="text" placeholder="Device name" />
-                <input id="newDeviceRoom" type="text" placeholder="Room" />
-                <select id="newDeviceType">
-                  <option value="LIGHT">💡 Light</option>
-                  <option value="OUTLET">🔌 Outlet</option>
-                  <option value="IRON">🔥 Iron</option>
-                  <option value="CAMERA">📷 Camera</option>
-                  <option value="MULTI_SWITCH">🎚 Multi-Switch</option>
-                </select>
-                <select id="newDeviceFloor">
-                  <option value="ground">Ground Floor</option>
-                  <option value="first">First Floor</option>
-                </select>
-                <input id="newDeviceX" type="number" min="0" max="3" placeholder="Grid X (0-3)" value="0" />
-                <input id="newDeviceY" type="number" min="0" max="3" placeholder="Grid Y (0-3)" value="0" />
-              </div>
-              <div class="add-device-actions">
-                <button id="addDeviceSubmit" class="primary-btn">Add device</button>
-                <button id="addDeviceCancel" class="ghost" onclick="document.querySelector('#addDeviceForm').classList.add('hidden')">Cancel</button>
-              </div>
-            </div>
-
             <div id="deviceList" class="list"></div>
           </article>
 
@@ -98,7 +69,7 @@
               <div class="section-heading">
                 <div>
                   <p class="eyebrow">User document</p>
-                  <h2>Notification Settings</h2>
+                  <h2>Settings</h2>
                 </div>
               </div>
               <div id="settingsList" class="settings-list"></div>
@@ -119,16 +90,6 @@
 
       <p id="message" class="message"></p>
     </main>
-
-    <!-- Device detail slide-in panel -->
-    <div id="detailOverlay" class="detail-overlay"></div>
-    <aside id="detailPanel" class="detail-panel">
-      <div class="detail-panel-header">
-        <h2>Device Details</h2>
-        <button id="detailClose" class="ghost icon-btn" aria-label="Close">✕</button>
-      </div>
-      <div id="detailContent" class="detail-panel-body"></div>
-    </aside>
 
     <script type="module" src="./app.js"></script>
   </body>

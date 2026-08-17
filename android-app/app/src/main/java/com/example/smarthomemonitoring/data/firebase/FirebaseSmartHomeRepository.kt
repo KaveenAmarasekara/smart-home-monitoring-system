@@ -159,6 +159,9 @@ object FirebaseSmartHomeRepository {
                         ?.mapNotNull {
                             it.data?.toAppNotification(it.id)
                         }
+                        ?.sortedByDescending {
+                            it.timestamp
+                        }
                         .orEmpty()
 
                 onNotificationsChanged(notifications)
@@ -536,7 +539,8 @@ object FirebaseSmartHomeRepository {
             title = get("title") as? String ?: return null,
             description = get("description") as? String ?: return null,
             time = get("time") as? String ?: "",
-            important = get("important") as? Boolean ?: false
+            important = get("important") as? Boolean ?: false,
+            timestamp = (get("timestamp") as? Number)?.toLong() ?: 0L
         )
     }
 
@@ -545,7 +549,8 @@ object FirebaseSmartHomeRepository {
             "title" to title,
             "description" to description,
             "time" to time,
-            "important" to important
+            "important" to important,
+            "timestamp" to timestamp
         )
     }
 

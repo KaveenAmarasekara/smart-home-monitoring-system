@@ -148,7 +148,7 @@ function listenForNotifications() {
     (snap) => {
       notifications = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+        .sort((a, b) => notificationTimestampMs(b) - notificationTimestampMs(a));
       renderNotifications();
     },
     (err) => setMessage(err.message),
@@ -173,6 +173,25 @@ function listenForSettings(uid) {
 // ── Auto-shutdown ticker (every 20 s) ─────────────────────────────────────────
 setInterval(async () => {
   const now = Date.now();
+
+  // Schedule automation for LIGHT devices.
+  for (const device of devices) {
+    if (device.type !== "LIGHT" || !device.scheduleEnabled) continue;
+    if (device.status === "ERROR" || device.status === "DISCONNECTED") continue;
+
+    const shouldBeOn = isNowWithinSchedule(device.scheduleStart, device.scheduleEnd);
+    const targetStatus = shouldBeOn ? "ON" : "OFF";
+
+    if (device.status !== targetStatus) {
+      await updateDevice(device, { status: targetStatus });
+      await pushNotification({
+        title: `${device.name} schedule`,
+        description: `Light switched ${shouldBeOn ? "on" : "off"} automatically.`,
+        important: false,
+      });
+    }
+  }
+
   for (const device of devices) {
     if (device.type !== "IRON" || device.status !== "ON") continue;
     const turnedOnAt = Number(device.turnedOnAt ?? 0);
@@ -307,7 +326,7 @@ function renderNotifications() {
         <div class="notification-row ${n.important ? "important" : ""}">
           <strong>${escapeHtml(n.title)}</strong>
           <p>${escapeHtml(n.description)}</p>
-          <span>${escapeHtml(n.time ?? "")}</span>
+          <span>${escapeHtml(notificationDisplayTime(n))}</span>
         </div>`).join("");
 }
 
@@ -554,6 +573,43 @@ async function updateDevice(device, changes) {
 async function pushNotification(data) {
   const time = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   await addDoc(collection(db, "notifications"), { ...data, time, timestamp: Date.now() });
+}
+
+function notificationTimestampMs(notification) {
+  const raw = notification?.timestamp;
+  if (typeof raw === "number") return raw;
+  if (raw && typeof raw.toMillis === "function") return raw.toMillis();
+  return 0;
+}
+
+function notificationDisplayTime(notification) {
+  if (notification?.time) return String(notification.time);
+  const timestamp = notificationTimestampMs(notification);
+  if (!timestamp) return "";
+  return new Date(timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function parseClockMinutes(value) {
+  if (typeof value !== "string") return null;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+function isNowWithinSchedule(start, end) {
+  const startMin = parseClockMinutes(start);
+  const endMin = parseClockMinutes(end);
+  if (startMin == null || endMin == null) return false;
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  if (startMin === endMin) return true;
+  if (startMin < endMin) return nowMin >= startMin && nowMin < endMin;
+  return nowMin >= startMin || nowMin < endMin;
 }
 
 async function seedDemoData() {

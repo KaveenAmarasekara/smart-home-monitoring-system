@@ -35,6 +35,9 @@ import com.example.smarthomemonitoring.ui.screens.notifications.NotificationsScr
 import com.example.smarthomemonitoring.ui.screens.reports.ReportsScreen
 import com.example.smarthomemonitoring.ui.screens.settings.SettingsScreen
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun AppNavigation() {
@@ -51,11 +54,42 @@ fun AppNavigation() {
     var backendError by remember { mutableStateOf<String?>(null) }
     var isSignedIn by remember { mutableStateOf(FirebaseSmartHomeRepository.isSignedIn) }
 
-    // Auto-shutdown: check iron devices every 30 s
+    // Device automation worker: schedule events + iron auto-shutdown.
     LaunchedEffect(Unit) {
         while (true) {
-            delay(30_000)
+            delay(20_000)
             val all = groundDevices + firstFloorDevices
+
+            all.filter {
+                it.type == DeviceType.LIGHT &&
+                it.scheduleEnabled &&
+                it.status != DeviceStatus.ERROR &&
+                it.status != DeviceStatus.DISCONNECTED
+            }.forEach { light ->
+                val shouldBeOn = isNowWithinSchedule(light.scheduleStart, light.scheduleEnd)
+                val targetStatus = if (shouldBeOn) DeviceStatus.ON else DeviceStatus.OFF
+
+                if (light.status != targetStatus) {
+                    val updated = light.copy(status = targetStatus)
+                    val floorId = if (groundDevices.any { it.id == light.id }) GROUND_FLOOR_ID else FIRST_FLOOR_ID
+                    groundDevices = groundDevices.map { if (it.id == light.id) updated else it }
+                    firstFloorDevices = firstFloorDevices.map { if (it.id == light.id) updated else it }
+                    FirebaseSmartHomeRepository.updateDevice(updated, floorId) { backendError = it.message }
+
+                    val now = System.currentTimeMillis()
+                    FirebaseSmartHomeRepository.addNotification(
+                        AppNotification(
+                            id = "schedule_${light.id}_$now",
+                            title = "${light.name} schedule",
+                            description = "Light switched ${if (shouldBeOn) "on" else "off"} automatically.",
+                            time = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(now)),
+                            important = false,
+                            timestamp = now
+                        )
+                    ) { backendError = it.message }
+                }
+            }
+
             all.filter {
                 it.type == DeviceType.IRON &&
                 it.status == DeviceStatus.ON &&
@@ -68,13 +102,14 @@ fun AppNavigation() {
                     groundDevices = groundDevices.map { if (it.id == iron.id) offDevice else it }
                     firstFloorDevices = firstFloorDevices.map { if (it.id == iron.id) offDevice else it }
                     FirebaseSmartHomeRepository.updateDevice(offDevice, floorId) { backendError = it.message }
+                    val now = System.currentTimeMillis()
                     val note = AppNotification(
-                        id = "auto_${iron.id}_${System.currentTimeMillis()}",
+                        id = "auto_${iron.id}_$now",
                         title = "${iron.name} automatically switched off",
                         description = "Maximum ON duration of ${iron.maxOnDurationMinutes} minutes reached.",
-                        time = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
-                            .format(java.util.Date()),
-                        important = true
+                        time = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(now)),
+                        important = true,
+                        timestamp = now
                     )
                     FirebaseSmartHomeRepository.addNotification(note) { backendError = it.message }
                 }
@@ -296,4 +331,25 @@ fun AppNavigation() {
             )
         }
     }
+}
+
+private fun parseClockMinutes(value: String): Int? {
+    val parts = value.trim().split(":")
+    if (parts.size != 2) return null
+    val hour = parts[0].toIntOrNull() ?: return null
+    val minute = parts[1].toIntOrNull() ?: return null
+    if (hour !in 0..23 || minute !in 0..59) return null
+    return hour * 60 + minute
+}
+
+private fun isNowWithinSchedule(start: String, end: String): Boolean {
+    val startMin = parseClockMinutes(start) ?: return false
+    val endMin = parseClockMinutes(end) ?: return false
+
+    val now = java.util.Calendar.getInstance()
+    val nowMin = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
+
+    if (startMin == endMin) return true
+    if (startMin < endMin) return nowMin in startMin until endMin
+    return nowMin >= startMin || nowMin < endMin
 }
